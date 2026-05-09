@@ -332,9 +332,7 @@ const Auth = {
 
         this.updateNav();
 
-        const dismissed = localStorage.getItem('azg_dismissed');
-        const recentlyDismissed = dismissed && (Date.now() - parseInt(dismissed)) < 86400000;
-        if (!this.session && !recentlyDismissed) {
+        if (!this.session) {
             setTimeout(() => {
                 const el = document.getElementById('loginPopup');
                 el.style.display = 'flex';
@@ -375,7 +373,6 @@ const Auth = {
 };
 
 function closeLoginPopup() {
-    localStorage.setItem('azg_dismissed', Date.now());
     const el = document.getElementById('loginPopup');
     el.classList.remove('open');
     el.style.display = 'none';
