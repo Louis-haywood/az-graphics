@@ -7,6 +7,7 @@
     <title>Shop | Az Graphics</title>
     <link rel="icon" type="image/png" href="assets/logo_n.png">
     <link rel="stylesheet" href="css/style.css">
+    <script src="js/config.js"></script>
 </head>
 <body>
 
@@ -35,6 +36,22 @@
         <span></span><span></span><span></span>
     </button>
 </nav>
+
+<!-- LOGIN POPUP -->
+<div class="login-popup-overlay" id="loginPopup">
+    <div class="login-popup">
+        <img src="assets/logo_n.png" alt="Az Graphics" class="login-popup-logo">
+        <h2>Login to Purchase</h2>
+        <p>Sign in with Discord to place orders. It takes one click — you'll be automatically added to the Az Graphics server where your order is handled.</p>
+        <div class="login-popup-actions">
+            <button class="btn-discord-login" id="loginBtn">
+                <svg viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.03.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.292a.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+                Login with Discord
+            </button>
+        </div>
+        <button class="login-popup-dismiss" id="loginDismiss">I'm just browsing for now</button>
+    </div>
+</div>
 
 <div class="modal-overlay" id="proofModal" role="dialog" aria-modal="true">
     <div class="modal">
@@ -286,6 +303,78 @@
 </footer>
 
 <script src="js/cart.js"></script>
-<script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
+<script>
+document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+const Auth = {
+    session: null,
+
+    init() {
+        const params = new URLSearchParams(window.location.search);
+
+        if (params.get('auth_error')) {
+            Toast.show('Login failed — please try again');
+        }
+
+        if (params.get('session')) {
+            this.session = {
+                token:    params.get('session'),
+                uid:      params.get('uid'),
+                username: params.get('username'),
+                avatar:   params.get('avatar')
+            };
+            localStorage.setItem('azg_session', JSON.stringify(this.session));
+            window.history.replaceState({}, '', window.location.pathname);
+            Toast.show(`Welcome, ${this.session.username}!`);
+        } else {
+            try { this.session = JSON.parse(localStorage.getItem('azg_session')); } catch {}
+        }
+
+        this.updateNav();
+
+        if (!this.session && !sessionStorage.getItem('azg_dismissed')) {
+            setTimeout(() => document.getElementById('loginPopup').classList.add('open'), 1200);
+        }
+    },
+
+    login() {
+        window.location.href = `${BACKEND_URL}/auth/discord`;
+    },
+
+    logout() {
+        this.session = null;
+        localStorage.removeItem('azg_session');
+        this.updateNav();
+    },
+
+    updateNav() {
+        const navRight = document.querySelector('.nav-right');
+        document.querySelectorAll('.nav-user').forEach(e => e.remove());
+        const discordBtn = navRight.querySelector('.discord-btn');
+
+        if (this.session) {
+            if (discordBtn) discordBtn.style.display = 'none';
+            const avatarUrl = this.session.avatar
+                ? `https://cdn.discordapp.com/avatars/${this.session.uid}/${this.session.avatar}.png?size=64`
+                : `https://cdn.discordapp.com/embed/avatars/0.png`;
+            const el = document.createElement('div');
+            el.className = 'nav-user';
+            el.innerHTML = `<img src="${avatarUrl}" alt="${this.session.username}"><span>${this.session.username}</span><button class="nav-user-logout" title="Sign out">✕</button>`;
+            el.querySelector('.nav-user-logout').addEventListener('click', () => Auth.logout());
+            navRight.insertBefore(el, navRight.firstChild);
+        } else {
+            if (discordBtn) discordBtn.style.display = '';
+        }
+    }
+};
+
+document.getElementById('loginBtn').addEventListener('click', () => Auth.login());
+document.getElementById('loginDismiss').addEventListener('click', () => {
+    sessionStorage.setItem('azg_dismissed', '1');
+    document.getElementById('loginPopup').classList.remove('open');
+});
+
+Auth.init();
+</script>
 </body>
 </html>
