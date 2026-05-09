@@ -332,7 +332,11 @@ const Auth = {
 
         this.updateNav();
 
+<<<<<<< HEAD
         if (!this.session) {
+=======
+        if (!this.session && !sessionStorage.getItem('azg_dismissed')) {
+>>>>>>> parent of 8770879 (Update shop.html)
             setTimeout(() => {
                 const el = document.getElementById('loginPopup');
                 el.style.display = 'flex';
@@ -373,6 +377,10 @@ const Auth = {
 };
 
 function closeLoginPopup() {
+<<<<<<< HEAD
+=======
+    sessionStorage.setItem('azg_dismissed', '1');
+>>>>>>> parent of 8770879 (Update shop.html)
     const el = document.getElementById('loginPopup');
     el.classList.remove('open');
     el.style.display = 'none';
