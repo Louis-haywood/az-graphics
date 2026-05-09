@@ -453,6 +453,9 @@ footer { background:var(--bg-2); border-top:1px solid var(--border); padding:3re
 
 <script>
 const DISCORD_WEBHOOK_URL = 'https://discord.com/api/webhooks/1502781356709646669/XdAxneMvaernzJB7JmpE9o_H6uPh8fHfSFca6krdhf8kv4oOLxPOJF0l0iDuwIoSDiNK';
+const BACKEND_URL = 'http://109.106.1.105:3000';
+
+function discordLogin() { window.location.href = `${BACKEND_URL}/auth/discord`; }
 
 // ── CART ─────────────────────────────────────────────────────────────────────
 const CART_KEY = 'azg_cart';
