@@ -84,7 +84,7 @@ app.get('/auth/callback', async (req, res) => {
             username: user.global_name || user.username,
             avatar:   user.avatar || ''
         });
-        res.redirect(`${process.env.FRONTEND_URL}/shop.html?${params}`);
+        res.redirect(`${process.env.FRONTEND_URL}/?${params}#shop`);
 
     } catch (err) {
         console.error('OAuth error:', err.response?.data || err.message);
