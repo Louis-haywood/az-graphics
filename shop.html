@@ -38,7 +38,7 @@
 </nav>
 
 <!-- LOGIN POPUP -->
-<div class="login-popup-overlay" id="loginPopup">
+<div class="login-popup-overlay" id="loginPopup" style="display:none;">
     <div class="login-popup">
         <img src="assets/logo_n.png" alt="Az Graphics" class="login-popup-logo">
         <h2>Login to Purchase</h2>
@@ -333,7 +333,11 @@ const Auth = {
         this.updateNav();
 
         if (!this.session && !sessionStorage.getItem('azg_dismissed')) {
-            setTimeout(() => document.getElementById('loginPopup').classList.add('open'), 1200);
+            setTimeout(() => {
+                const el = document.getElementById('loginPopup');
+                el.style.display = 'flex';
+                el.classList.add('open');
+            }, 1200);
         }
     },
 
@@ -370,7 +374,9 @@ const Auth = {
 
 function closeLoginPopup() {
     sessionStorage.setItem('azg_dismissed', '1');
-    document.getElementById('loginPopup').classList.remove('open');
+    const el = document.getElementById('loginPopup');
+    el.classList.remove('open');
+    el.style.display = 'none';
 }
 
 document.getElementById('loginBtn').addEventListener('click', () => Auth.login());
