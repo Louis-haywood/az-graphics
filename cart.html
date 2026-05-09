@@ -140,23 +140,46 @@ document.addEventListener('DOMContentLoaded', () => renderCheckout());
 function renderCheckout() {
     const area = document.getElementById('checkoutArea');
     if (!area) return;
-    area.innerHTML = `
-        <input id="discordUsername" type="text" placeholder="Your Discord username (e.g. louis123)"
-            style="width:100%;padding:.7rem 1rem;margin-top:1.2rem;background:#1a1a1a;border:1px solid rgba(201,160,40,0.3);border-radius:10px;color:#ededed;font-size:.95rem;font-family:'Inter',sans-serif;box-sizing:border-box;">
-        <button class="btn btn-gold checkout-btn" id="placeOrderBtn" style="width:100%;justify-content:center;margin-top:.75rem;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-            Place Order
-        </button>
-        <div class="cart-notice">A private order channel will be created for you in our Discord server.</div>`;
+    const session = getSession();
+
+    if (session) {
+        area.innerHTML = `
+            <div style="display:flex;align-items:center;gap:.6rem;margin-top:1.2rem;padding:.6rem .9rem;background:#1a1a1a;border:1px solid rgba(201,160,40,0.2);border-radius:10px;">
+                <img src="https://cdn.discordapp.com/avatars/${session.uid}/${session.avatar}.png?size=32" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" style="width:28px;height:28px;border-radius:50%;">
+                <span style="font-size:.85rem;color:#888;">Ordering as <strong style="color:#ededed;">${session.username}</strong></span>
+            </div>
+            <button class="btn btn-gold checkout-btn" id="placeOrderBtn" style="width:100%;justify-content:center;margin-top:.75rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Place Order
+            </button>
+            <div class="cart-notice">A private order channel will be created for you in our Discord server.</div>`;
+    } else {
+        area.innerHTML = `
+            <input id="discordUsername" type="text" placeholder="Your Discord username (e.g. louis123)"
+                style="width:100%;padding:.7rem 1rem;margin-top:1.2rem;background:#1a1a1a;border:1px solid rgba(201,160,40,0.3);border-radius:10px;color:#ededed;font-size:.95rem;font-family:'Inter',sans-serif;box-sizing:border-box;">
+            <button class="btn btn-gold checkout-btn" id="placeOrderBtn" style="width:100%;justify-content:center;margin-top:.75rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                Place Order
+            </button>
+            <div class="cart-notice">A private order channel will be created for you in our Discord server.</div>`;
+    }
     document.getElementById('placeOrderBtn').addEventListener('click', placeOrder);
 }
 
 async function placeOrder() {
-    const username = document.getElementById('discordUsername').value.trim();
-    if (!username) {
-        document.getElementById('discordUsername').style.borderColor = '#e74c3c';
-        document.getElementById('discordUsername').placeholder = 'Please enter your Discord username';
-        return;
+    const session = getSession();
+    let username;
+
+    if (session) {
+        username = session.username;
+    } else {
+        username = document.getElementById('discordUsername')?.value.trim();
+        if (!username) {
+            const input = document.getElementById('discordUsername');
+            input.style.borderColor = '#e74c3c';
+            input.placeholder = 'Please enter your Discord username';
+            return;
+        }
     }
 
     const btn = document.getElementById('placeOrderBtn');
