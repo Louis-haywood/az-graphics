@@ -173,9 +173,10 @@ img { max-width: 100%; display: block; }
 .hero::before {
     content: '';
     position: absolute; inset: 0;
-    background-image:
-        repeating-linear-gradient(0deg, transparent, transparent 60px, rgba(201,160,40,0.03) 60px, rgba(201,160,40,0.03) 61px),
-        repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(201,160,40,0.03) 60px, rgba(201,160,40,0.03) 61px);
+    background-image: url('../assets/front_page.png');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.18;
     pointer-events: none;
 }
 
