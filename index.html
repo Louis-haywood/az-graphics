@@ -186,6 +186,17 @@ img { max-width: 100%; display: block; }
     pointer-events: none;
 }
 
+.hero::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, transparent, var(--bg));
+    z-index: 0;
+    pointer-events: none;
+}
+
+.hero > * { position: relative; z-index: 1; }
+
 .hero-logo { width: 120px; margin: 0 auto 1.5rem; filter: drop-shadow(0 0 24px var(--gold-glow)); }
 
 .hero h1 {
