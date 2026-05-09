@@ -105,7 +105,9 @@ bot.on('messageCreate', async (message) => {
         const totalField    = embed.fields.find(f => f.name === 'Total');
         const itemsField    = embed.fields.find(f => f.name === 'Items');
         const nameField     = embed.fields.find(f => f.name === 'Customer');
+        const idField       = embed.fields.find(f => f.name === 'Discord ID');
         const username      = nameField?.value?.trim() || 'unknown';
+        const discordId     = idField?.value?.trim();
         const safeName      = username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'user';
         const guild         = message.guild;
 
@@ -148,9 +150,10 @@ bot.on('messageCreate', async (message) => {
             .setFooter({ text: 'Az Graphics' });
 
         const staffPing = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : 'Staff';
+        const userPing  = discordId && discordId !== 'N/A' ? `<@${discordId}>` : `**${username}**`;
 
         await channel.send({
-            content: `${staffPing} — New order received from **${username}**.\n\nPlease reach out to them on Discord to arrange payment and delivery.${hasProofItems ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items.' : ''}`,
+            content: `${staffPing} — New order received from ${userPing}!\n\nPlease reach out to them to arrange payment and delivery.${hasProofItems ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items.' : ''}`,
             embeds:  [orderEmbed]
         });
 

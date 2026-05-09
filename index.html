@@ -611,9 +611,10 @@ async function placeOrder() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ embeds: [{ title: '🛒 New Order', color: 0xC9A028, fields: [
-                { name: 'Customer', value: username, inline: true },
-                { name: 'Total',    value: `£${total.toFixed(2)}`, inline: true },
-                { name: 'Items',    value: itemLines || '—' }
+                { name: 'Customer',   value: username,                        inline: true },
+                { name: 'Discord ID', value: session ? session.uid : 'N/A',   inline: true },
+                { name: 'Total',      value: `£${total.toFixed(2)}`,          inline: true },
+                { name: 'Items',      value: itemLines || '—' }
             ], timestamp: new Date().toISOString(), footer: { text: 'Az Graphics' } }] })
         });
         if (!res.ok) throw new Error('Webhook failed');
