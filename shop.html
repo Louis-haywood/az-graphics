@@ -332,17 +332,7 @@ const Auth = {
 
         this.updateNav();
 
-<<<<<<< HEAD
-<<<<<<< HEAD
         if (!this.session) {
-=======
-        if (!this.session && !sessionStorage.getItem('azg_dismissed')) {
->>>>>>> parent of 8770879 (Update shop.html)
-=======
-        const dismissed = localStorage.getItem('azg_dismissed');
-        const recentlyDismissed = dismissed && (Date.now() - parseInt(dismissed)) < 86400000;
-        if (!this.session && !recentlyDismissed) {
->>>>>>> parent of bb87574 (Update shop.html)
             setTimeout(() => {
                 const el = document.getElementById('loginPopup');
                 el.style.display = 'flex';
@@ -383,14 +373,6 @@ const Auth = {
 };
 
 function closeLoginPopup() {
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-    sessionStorage.setItem('azg_dismissed', '1');
->>>>>>> parent of 8770879 (Update shop.html)
-=======
-    localStorage.setItem('azg_dismissed', Date.now());
->>>>>>> parent of bb87574 (Update shop.html)
     const el = document.getElementById('loginPopup');
     el.classList.remove('open');
     el.style.display = 'none';
