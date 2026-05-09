@@ -475,15 +475,18 @@ img { max-width: 100%; display: block; }
 
 /* ── LOGIN POPUP ── */
 .login-popup-overlay {
+    display: none;
     position: fixed; inset: 0; z-index: 8000;
-    background: rgba(0,0,0,0.75);
+    background: rgba(0,0,0,0.8);
     backdrop-filter: blur(6px);
-    display: flex; align-items: center; justify-content: center;
+    align-items: center; justify-content: center;
     padding: 1rem;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.3s ease;
 }
-.login-popup-overlay.open { opacity: 1; pointer-events: all; }
+.login-popup-overlay.open {
+    display: flex;
+    animation: popupFadeIn 0.3s ease forwards;
+}
+@keyframes popupFadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 .login-popup {
     background: var(--bg-card);
@@ -493,10 +496,9 @@ img { max-width: 100%; display: block; }
     max-width: 420px; width: 100%;
     box-shadow: 0 20px 60px rgba(0,0,0,0.7);
     text-align: center;
-    transform: translateY(20px);
-    transition: transform 0.3s ease;
+    animation: popupSlideUp 0.3s ease forwards;
 }
-.login-popup-overlay.open .login-popup { transform: translateY(0); }
+@keyframes popupSlideUp { from { transform: translateY(24px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 .login-popup-logo { width: 60px; margin: 0 auto 1.2rem; }
 .login-popup h2 { font-size: 1.7rem; font-weight: 700; margin-bottom: .5rem; }

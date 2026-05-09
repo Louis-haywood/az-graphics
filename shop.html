@@ -368,10 +368,15 @@ const Auth = {
     }
 };
 
-document.getElementById('loginBtn').addEventListener('click', () => Auth.login());
-document.getElementById('loginDismiss').addEventListener('click', () => {
+function closeLoginPopup() {
     sessionStorage.setItem('azg_dismissed', '1');
     document.getElementById('loginPopup').classList.remove('open');
+}
+
+document.getElementById('loginBtn').addEventListener('click', () => Auth.login());
+document.getElementById('loginDismiss').addEventListener('click', closeLoginPopup);
+document.getElementById('loginPopup').addEventListener('click', function(e) {
+    if (e.target === this) closeLoginPopup();
 });
 
 Auth.init();
