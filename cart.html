@@ -135,12 +135,7 @@ function getSession() {
     try { return JSON.parse(localStorage.getItem('azg_session')); } catch { return null; }
 }
 
-// Override renderCart without using a function declaration (avoids hoisting bug)
-const _origRenderCart = window.renderCart;
-window.renderCart = function() {
-    _origRenderCart();
-    renderCheckout();
-};
+document.addEventListener('DOMContentLoaded', () => renderCheckout());
 
 function renderCheckout() {
     const area = document.getElementById('checkoutArea');
