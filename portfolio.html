@@ -122,7 +122,7 @@ document.getElementById('footerYear').textContent = new Date().getFullYear();
 let images = [];
 let currentIndex = 0;
 
-fetch('assets/portfolio/images.json')
+fetch(`assets/portfolio/images.json?t=${Date.now()}`)
     .then(r => r.json())
     .then(data => {
         images = data.sort(() => Math.random() - 0.5);
