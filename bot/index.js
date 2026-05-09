@@ -5,17 +5,20 @@ const axios   = require('axios');
 const cors    = require('cors');
 const crypto  = require('crypto');
 
-// ── Discord bot ───────────────────────────────────────────────────────────────
 const bot = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
 });
 
-// ── Express server ────────────────────────────────────────────────────────────
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL }));
 app.use(express.json());
 
-// ── Sessions (in-memory, 24h TTL) ─────────────────────────────────────────────
+// ── Sessions ──────────────────────────────────────────────────────────────────
 const sessions = new Map();
 
 setInterval(() => {
@@ -24,15 +27,8 @@ setInterval(() => {
         if (s.createdAt < cutoff) sessions.delete(token);
 }, 3600000);
 
-function getSession(req) {
-    const auth = req.headers.authorization;
-    if (!auth?.startsWith('Bearer ')) return null;
-    return sessions.get(auth.slice(7)) || null;
-}
+// ── OAuth Routes ──────────────────────────────────────────────────────────────
 
-// ── Routes ────────────────────────────────────────────────────────────────────
-
-// Start Discord OAuth
 app.get('/auth/discord', (req, res) => {
     const params = new URLSearchParams({
         client_id:     process.env.DISCORD_CLIENT_ID,
@@ -43,7 +39,6 @@ app.get('/auth/discord', (req, res) => {
     res.redirect(`https://discord.com/oauth2/authorize?${params}`);
 });
 
-// OAuth callback — exchanges code, adds user to server, creates session
 app.get('/auth/callback', async (req, res) => {
     const { code } = req.query;
     if (!code) return res.redirect(`${process.env.FRONTEND_URL}/shop.html?auth_error=1`);
@@ -77,11 +72,10 @@ app.get('/auth/callback', async (req, res) => {
 
         const token = crypto.randomBytes(32).toString('hex');
         sessions.set(token, {
-            id:          user.id,
-            username:    user.global_name || user.username,
-            avatar:      user.avatar || '',
-            accessToken: access_token,
-            createdAt:   Date.now()
+            id:        user.id,
+            username:  user.global_name || user.username,
+            avatar:    user.avatar || '',
+            createdAt: Date.now()
         });
 
         const params = new URLSearchParams({
@@ -98,33 +92,33 @@ app.get('/auth/callback', async (req, res) => {
     }
 });
 
-// Verify session
-app.get('/api/me', (req, res) => {
-    const session = getSession(req);
-    if (!session) return res.status(401).json({ error: 'Not authenticated' });
-    res.json({ id: session.id, username: session.username, avatar: session.avatar });
-});
+// ── Watch orders channel for webhook messages ─────────────────────────────────
+bot.on('messageCreate', async (message) => {
+    if (!message.webhookId) return;
+    if (message.channelId !== process.env.DISCORD_ORDERS_CHANNEL_ID) return;
+    if (!message.embeds.length) return;
 
-// Place order — creates private Discord channel and sends embed
-app.post('/api/order', async (req, res) => {
-    const session = getSession(req);
-    if (!session) return res.status(401).json({ error: 'Not authenticated' });
-
-    const { items, total } = req.body;
-    if (!Array.isArray(items) || !items.length)
-        return res.status(400).json({ error: 'Cart is empty' });
+    const embed = message.embeds[0];
+    if (embed.title !== '🛒 New Order') return;
 
     try {
-        const guild = bot.guilds.cache.get(process.env.DISCORD_GUILD_ID);
-        if (!guild) return res.status(500).json({ error: 'Bot not connected to server' });
+        const idField = embed.fields.find(f => f.name === 'Discord ID');
+        const userId  = idField?.value?.trim();
+        if (!userId) return;
 
-        const safeName    = session.username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'user';
-        const channelName = `order-${safeName}-${Date.now().toString(36)}`;
+        const totalField = embed.fields.find(f => f.name === 'Total');
+        const itemsField = embed.fields.find(f => f.name === 'Items');
+        const nameField  = embed.fields.find(f => f.name === 'Customer');
+
+        const guild    = message.guild;
+        const member   = await guild.members.fetch(userId).catch(() => null);
+        const username = member?.user.username || nameField?.value || userId;
+        const safeName = username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'user';
 
         const overwrites = [
             { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] },
             {
-                id: session.id,
+                id: userId,
                 allow: [
                     PermissionFlagsBits.ViewChannel,
                     PermissionFlagsBits.SendMessages,
@@ -148,52 +142,47 @@ app.post('/api/order', async (req, res) => {
         }
 
         const channel = await guild.channels.create({
-            name: channelName,
+            name: `order-${safeName}-${Date.now().toString(36)}`,
             type: ChannelType.GuildText,
-            parent: process.env.DISCORD_ORDER_CATEGORY_ID || null,
+            parent:               process.env.DISCORD_ORDER_CATEGORY_ID || null,
             permissionOverwrites: overwrites,
-            topic: `Order for ${session.username} | ID: ${session.id}`
+            topic:                `Order for ${username} | ${totalField?.value || ''}`
         });
 
-        const itemLines = items.map(i =>
-            `• **${i.name}** — £${(i.price * (i.qty || 1)).toFixed(2)}${(i.qty || 1) > 1 ? ` (×${i.qty})` : ''}`
-        ).join('\n');
+        const hasProofItems = itemsField?.value?.toLowerCase().includes('edited');
 
-        const hasProofItems = items.some(i => i.category === 'Edited Graphics');
-
-        const embed = new EmbedBuilder()
-            .setTitle('New Order — Az Graphics')
+        const orderEmbed = new EmbedBuilder()
+            .setTitle('🛒 New Order — Az Graphics')
             .setColor(0xC9A028)
             .addFields(
-                { name: 'Customer',      value: `<@${session.id}> (${session.username})`, inline: true },
-                { name: 'Order Total',   value: `£${parseFloat(total).toFixed(2)}`,       inline: true },
-                { name: '​',        value: '​',                                 inline: true },
-                { name: 'Items Ordered', value: itemLines }
+                { name: 'Customer',   value: `<@${userId}> (${username})`, inline: true },
+                { name: 'Total',      value: totalField?.value || '—',     inline: true },
+                { name: '​', value: '​',                          inline: true },
+                { name: 'Items',      value: itemsField?.value  || '—' }
             )
             .setTimestamp()
             .setFooter({ text: 'Az Graphics' });
 
-        const proofNotice = hasProofItems
-            ? '\n\n⚠️ **Your order includes Edited Graphics.** Please upload proof of ownership for the base files here — your order cannot be fulfilled without it.'
-            : '';
-
         await channel.send({
-            content: `Hey <@${session.id}>! 👋 Your order has been received. A member of staff will be with you shortly to arrange payment and delivery.${proofNotice}\n\nPlease stay in this channel — it is your private order thread.`,
-            embeds: [embed]
+            content: `Hey <@${userId}>! 👋 Your order has been received — staff will be with you shortly to arrange payment and delivery.${hasProofItems ? '\n\n⚠️ **Proof of ownership required** for your Edited Graphics items. Please upload it here.' : ''}`,
+            embeds:  [orderEmbed]
         });
 
-        const invite = await channel.createInvite({
-            maxAge:  86400,
-            maxUses: 2,
-            unique:  true,
-            reason:  `Order invite for ${session.username}`
-        });
+        const invite = await channel.createInvite({ maxAge: 86400, maxUses: 2, unique: true });
 
-        res.json({ success: true, invite: invite.url });
+        // DM the user with their channel link
+        try {
+            const user = await bot.users.fetch(userId);
+            await user.send(`Hey ${username}! 👋 Your Az Graphics order has been received. Here's your private order channel:\n${invite.url}`);
+        } catch {
+            // DMs closed — ping them in channel instead
+            await channel.send(`<@${userId}> I couldn't DM you. Use this link to return to your order channel: ${invite.url}`);
+        }
+
+        console.log(`Order channel created: ${channel.name} for user ${userId}`);
 
     } catch (err) {
-        console.error('Order error:', err);
-        res.status(500).json({ error: 'Failed to create order channel' });
+        console.error('Failed to create order channel:', err);
     }
 });
 
@@ -202,4 +191,4 @@ bot.once('ready', () => console.log(`Bot online: ${bot.user.tag}`));
 bot.login(process.env.DISCORD_BOT_TOKEN);
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`API server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server on port ${PORT}`));
