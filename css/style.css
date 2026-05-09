@@ -161,13 +161,9 @@ img { max-width: 100%; display: block; }
 /* ── HERO ── */
 .hero {
     position: relative;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 6rem 2rem 5rem;
     text-align: center;
-    padding: 7rem 2rem 6rem;
     overflow: hidden;
-    background:
-        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(201,160,40,0.08) 0%, transparent 70%),
-        var(--bg);
 }
 
 .hero::before {
