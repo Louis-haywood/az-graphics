@@ -169,7 +169,7 @@ img { max-width: 100%; display: block; }
 .hero::before {
     content: '';
     position: absolute; inset: 0;
-    background-image: url('../assets/front_page.png');
+    background-image: url('assets/front_page.png');
     background-size: cover;
     background-position: center;
     opacity: 100;
