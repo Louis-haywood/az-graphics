@@ -88,7 +88,7 @@ app.get('/auth/callback', async (req, res) => {
 
     } catch (err) {
         console.error('OAuth error:', err.response?.data || err.message);
-        res.redirect(`${process.env.FRONTEND_URL}/shop.html?auth_error=1`);
+        res.redirect(`${process.env.FRONTEND_URL}/?auth_error=1#shop`);
     }
 });
 
