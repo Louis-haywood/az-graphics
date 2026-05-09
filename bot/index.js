@@ -102,30 +102,15 @@ bot.on('messageCreate', async (message) => {
     if (embed.title !== '🛒 New Order') return;
 
     try {
-        const idField = embed.fields.find(f => f.name === 'Discord ID');
-        const userId  = idField?.value?.trim();
-        if (!userId) return;
-
-        const totalField = embed.fields.find(f => f.name === 'Total');
-        const itemsField = embed.fields.find(f => f.name === 'Items');
-        const nameField  = embed.fields.find(f => f.name === 'Customer');
-
-        const guild    = message.guild;
-        const member   = await guild.members.fetch(userId).catch(() => null);
-        const username = member?.user.username || nameField?.value || userId;
-        const safeName = username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'user';
+        const totalField    = embed.fields.find(f => f.name === 'Total');
+        const itemsField    = embed.fields.find(f => f.name === 'Items');
+        const nameField     = embed.fields.find(f => f.name === 'Customer');
+        const username      = nameField?.value?.trim() || 'unknown';
+        const safeName      = username.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 20) || 'user';
+        const guild         = message.guild;
 
         const overwrites = [
-            { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] },
-            {
-                id: userId,
-                allow: [
-                    PermissionFlagsBits.ViewChannel,
-                    PermissionFlagsBits.SendMessages,
-                    PermissionFlagsBits.ReadMessageHistory,
-                    PermissionFlagsBits.AttachFiles,
-                ]
-            }
+            { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] }
         ];
 
         if (process.env.DISCORD_STAFF_ROLE_ID) {
@@ -146,7 +131,7 @@ bot.on('messageCreate', async (message) => {
             type: ChannelType.GuildText,
             parent:               process.env.DISCORD_ORDER_CATEGORY_ID || null,
             permissionOverwrites: overwrites,
-            topic:                `Order for ${username} | ${totalField?.value || ''}`
+            topic:                `Order from ${username} | ${totalField?.value || ''}`
         });
 
         const hasProofItems = itemsField?.value?.toLowerCase().includes('edited');
@@ -155,31 +140,21 @@ bot.on('messageCreate', async (message) => {
             .setTitle('🛒 New Order — Az Graphics')
             .setColor(0xC9A028)
             .addFields(
-                { name: 'Customer',   value: `<@${userId}> (${username})`, inline: true },
-                { name: 'Total',      value: totalField?.value || '—',     inline: true },
-                { name: '​', value: '​',                          inline: true },
-                { name: 'Items',      value: itemsField?.value  || '—' }
+                { name: 'Customer', value: username,               inline: true },
+                { name: 'Total',    value: totalField?.value || '—', inline: true },
+                { name: 'Items',    value: itemsField?.value  || '—' }
             )
             .setTimestamp()
             .setFooter({ text: 'Az Graphics' });
 
+        const staffPing = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : 'Staff';
+
         await channel.send({
-            content: `Hey <@${userId}>! 👋 Your order has been received — staff will be with you shortly to arrange payment and delivery.${hasProofItems ? '\n\n⚠️ **Proof of ownership required** for your Edited Graphics items. Please upload it here.' : ''}`,
+            content: `${staffPing} — New order received from **${username}**.\n\nPlease reach out to them on Discord to arrange payment and delivery.${hasProofItems ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items.' : ''}`,
             embeds:  [orderEmbed]
         });
 
-        const invite = await channel.createInvite({ maxAge: 86400, maxUses: 2, unique: true });
-
-        // DM the user with their channel link
-        try {
-            const user = await bot.users.fetch(userId);
-            await user.send(`Hey ${username}! 👋 Your Az Graphics order has been received. Here's your private order channel:\n${invite.url}`);
-        } catch {
-            // DMs closed — ping them in channel instead
-            await channel.send(`<@${userId}> I couldn't DM you. Use this link to return to your order channel: ${invite.url}`);
-        }
-
-        console.log(`Order channel created: ${channel.name} for user ${userId}`);
+        console.log(`Order channel created: ${channel.name} for ${username}`);
 
     } catch (err) {
         console.error('Failed to create order channel:', err);
