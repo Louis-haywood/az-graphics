@@ -980,6 +980,12 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(r => r.json())
         .then(data => {
             bgImages = data.sort(() => Math.random() - 0.5);
+
+            bgImages.forEach(img => {
+                const pre = new Image();
+                pre.src = `assets/portfolio/${img.file}`;
+            });
+
             slides[0].style.backgroundImage = `url('assets/portfolio/${bgImages[0].file}')`;
             slides[0].classList.add('active');
             bgIndex = 1;
