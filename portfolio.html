@@ -60,8 +60,7 @@
 
 <section class="section">
     <div class="section-inner">
-
-        <div class="portfolio-coming-soon">
+        <div class="portfolio-coming-soon" id="comingSoon" style="display:none;">
             <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
             <h3>Screenshots Coming Soon</h3>
             <p>Portfolio images are being curated — check back soon or join our Discord for sneak peeks.</p>
@@ -70,19 +69,18 @@
                 View Previews on Discord
             </a>
         </div>
-
-        <!-- Populate this grid when you have screenshots ready.
-             Duplicate the .portfolio-item div and set the img src for each one. -->
-        <div class="portfolio-grid" id="galleryGrid" style="display:none;">
-            <!--
-            <div class="portfolio-item">
-                <img src="assets/portfolio/screenshot1.jpg" alt="Az Graphics reshade screenshot">
-            </div>
-            -->
-        </div>
-
+        <div class="portfolio-grid" id="galleryGrid" style="display:none;"></div>
     </div>
 </section>
+
+<!-- LIGHTBOX -->
+<div id="lightbox" style="display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,0.92); backdrop-filter:blur(6px); align-items:center; justify-content:center; padding:1rem;">
+    <button id="lbPrev" style="position:absolute; left:1.5rem; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:50%; width:48px; height:48px; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">&#8592;</button>
+    <img id="lbImg" src="" alt="" style="max-width:90vw; max-height:88vh; border-radius:10px; object-fit:contain; box-shadow:0 20px 60px rgba(0,0,0,0.8);">
+    <button id="lbNext" style="position:absolute; right:1.5rem; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:50%; width:48px; height:48px; font-size:1.4rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">&#8594;</button>
+    <button id="lbClose" style="position:absolute; top:1.2rem; right:1.5rem; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.15); color:#fff; border-radius:50%; width:40px; height:40px; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center;">&#10005;</button>
+    <p id="lbCaption" style="position:absolute; bottom:1.5rem; left:50%; transform:translateX(-50%); color:rgba(255,255,255,0.5); font-size:.85rem; white-space:nowrap;"></p>
+</div>
 
 <footer>
     <div class="footer-inner">
@@ -118,6 +116,65 @@
 </footer>
 
 <script src="js/cart.js"></script>
-<script>document.getElementById('footerYear').textContent = new Date().getFullYear();</script>
+<script>
+document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+let images = [];
+let currentIndex = 0;
+
+fetch('assets/portfolio/images.json')
+    .then(r => r.json())
+    .then(data => {
+        images = data.sort(() => Math.random() - 0.5);
+        const grid = document.getElementById('galleryGrid');
+        const soon = document.getElementById('comingSoon');
+
+        if (!images.length) {
+            soon.style.display = 'block';
+            return;
+        }
+
+        grid.style.display = 'grid';
+        images.forEach((img, i) => {
+            const item = document.createElement('div');
+            item.className = 'portfolio-item';
+            item.style.cursor = 'pointer';
+            item.innerHTML = `<img src="assets/portfolio/${img.file}" alt="${img.caption || 'Az Graphics screenshot'}" loading="lazy">`;
+            item.addEventListener('click', () => openLightbox(i));
+            grid.appendChild(item);
+        });
+    })
+    .catch(() => {
+        document.getElementById('comingSoon').style.display = 'block';
+    });
+
+const lightbox = document.getElementById('lightbox');
+const lbImg    = document.getElementById('lbImg');
+const lbCap    = document.getElementById('lbCaption');
+
+function openLightbox(index) {
+    currentIndex = index;
+    lbImg.src = `assets/portfolio/${images[index].file}`;
+    lbCap.textContent = images[index].caption || '';
+    lightbox.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+}
+
+function closeLightbox() {
+    lightbox.style.display = 'none';
+    document.body.style.overflow = '';
+}
+
+document.getElementById('lbClose').addEventListener('click', closeLightbox);
+document.getElementById('lbPrev').addEventListener('click', () => openLightbox((currentIndex - 1 + images.length) % images.length));
+document.getElementById('lbNext').addEventListener('click', () => openLightbox((currentIndex + 1) % images.length));
+lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', e => {
+    if (lightbox.style.display !== 'flex') return;
+    if (e.key === 'ArrowLeft')  openLightbox((currentIndex - 1 + images.length) % images.length);
+    if (e.key === 'ArrowRight') openLightbox((currentIndex + 1) % images.length);
+    if (e.key === 'Escape')     closeLightbox();
+});
+</script>
 </body>
 </html>
