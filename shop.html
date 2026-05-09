@@ -332,7 +332,9 @@ const Auth = {
 
         this.updateNav();
 
-        if (!this.session && !sessionStorage.getItem('azg_dismissed')) {
+        const dismissed = localStorage.getItem('azg_dismissed');
+        const recentlyDismissed = dismissed && (Date.now() - parseInt(dismissed)) < 86400000;
+        if (!this.session && !recentlyDismissed) {
             setTimeout(() => {
                 const el = document.getElementById('loginPopup');
                 el.style.display = 'flex';
@@ -373,7 +375,7 @@ const Auth = {
 };
 
 function closeLoginPopup() {
-    sessionStorage.setItem('azg_dismissed', '1');
+    localStorage.setItem('azg_dismissed', Date.now());
     const el = document.getElementById('loginPopup');
     el.classList.remove('open');
     el.style.display = 'none';
