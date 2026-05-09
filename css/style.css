@@ -355,15 +355,13 @@ img { max-width: 100%; display: block; }
 .portfolio-item {
     break-inside: avoid;
     margin-bottom: 1.25rem;
-    background: var(--bg-card);
+    height: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    overflow: hidden;
-    position: relative;
     transition: var(--tr);
 }
 .portfolio-item:hover { border-color: var(--border-h); transform: scale(1.02); }
-.portfolio-item img { width: 100%; height: auto; display: block; }
+.portfolio-item img { width: 100%; height: auto; display: block; border-radius: var(--radius-lg); }
 
 .portfolio-placeholder {
     width: 100%; height: 100%;
