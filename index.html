@@ -175,14 +175,21 @@ img { max-width: 100%; display: block; }
     overflow: hidden;
 }
 
+.hero-slide {
+    position: absolute; inset: 0;
+    background-size: cover;
+    background-position: center;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+    z-index: -3;
+}
+.hero-slide.active { opacity: 1; }
+
 .hero::before {
     content: '';
     position: absolute; inset: 0;
-    background-image: url('assets/front_page.png');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.3;
-    z-index: -1;
+    background: rgba(0, 0, 0, 0.45);
+    z-index: -2;
     pointer-events: none;
 }
 
@@ -191,7 +198,7 @@ img { max-width: 100%; display: block; }
     position: absolute; bottom: 0; left: 0; right: 0;
     height: 40%;
     background: linear-gradient(to bottom, transparent, var(--bg));
-    z-index: 0;
+    z-index: -1;
     pointer-events: none;
 }
 
@@ -656,6 +663,8 @@ footer {
 
 <!-- HERO -->
 <section class="hero">
+    <div class="hero-slide" id="heroSlide0"></div>
+    <div class="hero-slide" id="heroSlide1"></div>
     <img src="assets/logo_n.png" alt="Az Graphics" class="hero-logo">
     <h1>Elevate Your <span>FiveM</span><br>Experience</h1>
     <p>Stunning reshades, ENBs and graphics packs crafted for maximum realism — whether you want a UK-styled world or a full American setting.</p>
@@ -961,6 +970,29 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+    const slides = [document.getElementById('heroSlide0'), document.getElementById('heroSlide1')];
+    let activeSlide = 0;
+    let bgIndex = 0;
+    let bgImages = [];
+
+    fetch(`assets/portfolio/images.json?t=${Date.now()}`)
+        .then(r => r.json())
+        .then(data => {
+            bgImages = data.sort(() => Math.random() - 0.5);
+            slides[0].style.backgroundImage = `url('assets/portfolio/${bgImages[0].file}')`;
+            slides[0].classList.add('active');
+            bgIndex = 1;
+
+            setInterval(() => {
+                const next = activeSlide ^ 1;
+                slides[next].style.backgroundImage = `url('assets/portfolio/${bgImages[bgIndex % bgImages.length].file}')`;
+                slides[next].classList.add('active');
+                slides[activeSlide].classList.remove('active');
+                activeSlide = next;
+                bgIndex++;
+            }, 3000);
+        });
 });
 </script>
 </body>
