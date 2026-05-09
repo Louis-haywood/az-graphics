@@ -727,6 +727,8 @@ function navigate(page) {
     if (page === 'home') initHeroSlideshow();
     if (page === 'portfolio') initPortfolio();
     if (page === 'cart') renderCart();
+    const banner = document.getElementById('shopLoginBanner');
+    if (banner) banner.style.display = (page === 'shop' && !getSession()) ? 'block' : 'none';
     // Re-bind add-to-cart buttons when showing shop
     if (page === 'shop' || page === 'home') {
         document.querySelectorAll('.add-to-cart').forEach(btn => {
