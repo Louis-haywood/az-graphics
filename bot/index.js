@@ -6,7 +6,6 @@ const cors       = require('cors');
 const crypto     = require('crypto');
 const fs         = require('fs');
 const path       = require('path');
-const { execSync } = require('child_process');
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 const bot = new Client({
@@ -200,13 +199,8 @@ bot.on('interactionCreate', async (interaction) => {
         images.push({ file: filename, caption });
         fs.writeFileSync(PORTFOLIO_JSON, JSON.stringify(images, null, 2));
 
-        // Git push
-        execSync(`git add assets/portfolio`, { cwd: REPO_DIR });
-        execSync(`git commit -m "Add portfolio image: ${filename}"`, { cwd: REPO_DIR });
-        execSync(`git push`, { cwd: REPO_DIR });
-
-        await interaction.editReply({ content: `✅ **${attachment.name}** uploaded and pushed to GitHub!${caption ? ` Caption: "${caption}"` : ''}` });
-        console.log(`Portfolio image pushed: ${filename}`);
+        await interaction.editReply({ content: `✅ **${attachment.name}** uploaded to the portfolio!${caption ? ` Caption: "${caption}"` : ''} It will go live within 10 seconds.` });
+        console.log(`Portfolio image saved: ${filename}`);
     } catch (err) {
         console.error('Image upload error:', err);
         await interaction.editReply({ content: '❌ Something went wrong. Check that git credentials are set up on the VPS.' });
