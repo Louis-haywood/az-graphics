@@ -650,7 +650,8 @@ function initPortfolio() {
 
     Promise.all([localFetch, remoteFetch]).then(([local, remote]) => {
         const localMapped  = local.map(img => ({ ...img, src: `assets/portfolio/${img.file}` }));
-        const remoteMapped = remote.map(img => ({ ...img, src: img.url || `${TUNNEL_URL}/portfolio-images/${img.file}` }));
+        const remoteMapped = remote.filter(img => !local.find(l => l.file === img.file))
+                                   .map(img => ({ ...img, src: img.url || `${TUNNEL_URL}/portfolio-images/${img.file}` }));
         portfolioImages = [...localMapped, ...remoteMapped].sort(() => Math.random() - 0.5);
 
         const grid = document.getElementById('galleryGrid');

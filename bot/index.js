@@ -1,11 +1,12 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, PermissionFlagsBits, ChannelType, EmbedBuilder, REST, Routes, SlashCommandBuilder } = require('discord.js');
-const express = require('express');
-const axios   = require('axios');
-const cors    = require('cors');
-const crypto  = require('crypto');
-const fs      = require('fs');
-const path    = require('path');
+const express    = require('express');
+const axios      = require('axios');
+const cors       = require('cors');
+const crypto     = require('crypto');
+const fs         = require('fs');
+const path       = require('path');
+const { execSync } = require('child_process');
 
 // ── Setup ─────────────────────────────────────────────────────────────────────
 const bot = new Client({
@@ -21,7 +22,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORTFOLIO_DIR  = path.join(__dirname, 'portfolio');
+const REPO_DIR       = path.join(__dirname, '..');
+const PORTFOLIO_DIR  = path.join(REPO_DIR, 'assets', 'portfolio');
 const PORTFOLIO_JSON = path.join(PORTFOLIO_DIR, 'images.json');
 fs.mkdirSync(PORTFOLIO_DIR, { recursive: true });
 if (!fs.existsSync(PORTFOLIO_JSON)) fs.writeFileSync(PORTFOLIO_JSON, '[]');
@@ -195,14 +197,19 @@ bot.on('interactionCreate', async (interaction) => {
         fs.writeFileSync(filepath, imgRes.data);
 
         const images = JSON.parse(fs.readFileSync(PORTFOLIO_JSON, 'utf8'));
-        images.push({ file: filename, caption, url: `${process.env.TUNNEL_URL}/portfolio-images/${filename}` });
+        images.push({ file: filename, caption });
         fs.writeFileSync(PORTFOLIO_JSON, JSON.stringify(images, null, 2));
 
-        await interaction.editReply({ content: `✅ **${attachment.name}** uploaded to the portfolio!${caption ? ` Caption: "${caption}"` : ''}` });
-        console.log(`Portfolio image added: ${filename}`);
+        // Git push
+        execSync(`git add assets/portfolio`, { cwd: REPO_DIR });
+        execSync(`git commit -m "Add portfolio image: ${filename}"`, { cwd: REPO_DIR });
+        execSync(`git push`, { cwd: REPO_DIR });
+
+        await interaction.editReply({ content: `✅ **${attachment.name}** uploaded and pushed to GitHub!${caption ? ` Caption: "${caption}"` : ''}` });
+        console.log(`Portfolio image pushed: ${filename}`);
     } catch (err) {
         console.error('Image upload error:', err);
-        await interaction.editReply({ content: '❌ Something went wrong uploading the image.' });
+        await interaction.editReply({ content: '❌ Something went wrong. Check that git credentials are set up on the VPS.' });
     }
 });
 
