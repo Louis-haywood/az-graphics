@@ -214,10 +214,15 @@ bot.on('interactionCreate', async (interaction) => {
 
     // ── "I've Paid" button ────────────────────────────────────────────────────
     if (interaction.isButton() && interaction.customId.startsWith('paid_')) {
+        const topicMatch = interaction.channel.topic?.match(/uid:(\d+)/);
+        const buyerId    = topicMatch?.[1];
+
+        if (buyerId && interaction.user.id !== buyerId) {
+            return interaction.reply({ content: '❌ Only the person who placed this order can click this button.', ephemeral: true });
+        }
+
         const staffPing = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : 'Staff';
-
-        await interaction.update({ components: [] }); // remove the button
-
+        await interaction.update({ components: [] });
         await interaction.channel.send({
             content: `💰 **Payment claimed by ${interaction.user}!**\n\n${staffPing} — please verify the payment and deliver the files. Once confirmed, use \`/closeorder paid:True\` to close this ticket.`
         });
