@@ -31,6 +31,18 @@ const PORTFOLIO_JSON = path.join(PORTFOLIO_DIR, 'images.json');
 fs.mkdirSync(PORTFOLIO_DIR, { recursive: true });
 if (!fs.existsSync(PORTFOLIO_JSON)) fs.writeFileSync(PORTFOLIO_JSON, '[]');
 
+// ── Debug ─────────────────────────────────────────────────────────────────────
+const DEBUG_CHANNEL_ID = '1502979748169519194';
+async function debug(msg, error = false) {
+    const timestamp = new Date().toLocaleTimeString('en-GB');
+    const prefix    = error ? '🔴' : '🟢';
+    console.log(`[${timestamp}] ${msg}`);
+    try {
+        const ch = bot.channels.cache.get(DEBUG_CHANNEL_ID);
+        if (ch) await ch.send(`${prefix} \`[${timestamp}]\` ${msg}`);
+    } catch {}
+}
+
 // ── Sessions ──────────────────────────────────────────────────────────────────
 const sessions = new Map();
 setInterval(() => {
@@ -68,14 +80,15 @@ app.get('/auth/callback', async (req, res) => {
         const user = userRes.data;
 
         const guild = bot.guilds.cache.get(process.env.DISCORD_GUILD_ID);
-        if (guild) { try { await guild.members.add(user.id, { accessToken: access_token }); } catch {} }
+        if (guild) { try { await guild.members.add(user.id, { accessToken: access_token }); debug(`User ${user.username} auto-joined server`); } catch { debug(`Couldn't auto-join ${user.username} — already in server or missing scope`); } }
 
         const token = crypto.randomBytes(32).toString('hex');
         sessions.set(token, { id: user.id, username: user.global_name || user.username, avatar: user.avatar || '', createdAt: Date.now() });
         const params = new URLSearchParams({ session: token, uid: user.id, username: user.global_name || user.username, avatar: user.avatar || '' });
+        debug(`OAuth success: ${user.global_name || user.username} (${user.id})`);
         res.redirect(`${process.env.FRONTEND_URL}/?${params}#shop`);
     } catch (err) {
-        console.error('OAuth error:', err.response?.data || err.message);
+        debug(`OAuth error: ${err.response?.data?.error_description || err.message}`, true);
         res.redirect(`${process.env.FRONTEND_URL}/?auth_error=1#shop`);
     }
 });
@@ -148,8 +161,8 @@ bot.on('messageCreate', async (message) => {
             components: [row]
         });
 
-        console.log(`Order channel created: ${channel.name} for ${username}`);
-    } catch (err) { console.error('Failed to create order channel:', err); }
+        debug(`Order channel created: #${channel.name} for ${username}`);
+    } catch (err) { debug(`Failed to create order channel: ${err.message}`, true); }
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -226,6 +239,7 @@ bot.on('interactionCreate', async (interaction) => {
         await interaction.channel.send({
             content: `**Payment claimed by ${interaction.user}!**\n\n${staffPing} — please verify the payment and deliver the files. Once confirmed, use \`/closeorder paid:True\` to close this ticket.`
         });
+        debug(`Payment claimed by ${interaction.user.username} in #${interaction.channel.name}`);
         return;
     }
 
@@ -254,9 +268,9 @@ bot.on('interactionCreate', async (interaction) => {
             fs.writeFileSync(PORTFOLIO_JSON, JSON.stringify(images, null, 2));
 
             await interaction.editReply({ content: `**${attachment.name}** uploaded to the portfolio!${caption ? ` Caption: "${caption}"` : ''} It will go live within 10 seconds.` });
-            console.log(`Portfolio image saved: ${filename}`);
+            debug(`Portfolio image uploaded: ${filename} by ${interaction.user.username}`);
         } catch (err) {
-            console.error('Image upload error:', err);
+            debug(`Image upload error: ${err.message}`, true);
             await interaction.editReply({ content: 'Something went wrong uploading the image.' });
         }
     }
@@ -320,7 +334,7 @@ bot.on('interactionCreate', async (interaction) => {
                     const member = await interaction.guild.members.fetch(buyerId).catch(() => null);
                     if (member) await member.roles.add('958729075525054504');
                 } catch (err) {
-                    console.error('Failed to assign paid role:', err);
+                    debug(`Failed to assign paid role to ${buyerId}: ${err.message}`, true);
                 }
             }
 
@@ -369,10 +383,11 @@ bot.on('interactionCreate', async (interaction) => {
             }
 
             await channel.edit({ name: `closed-${cleanName}`, permissionOverwrites: newOverwrites });
+            debug(`Order closed: #${channel.name} | Paid: ${paid} | By: ${interaction.user.username}`);
             await interaction.editReply({ content: `Order closed. Transcript sent.` });
 
         } catch (err) {
-            console.error('Close order error:', err);
+            debug(`Close order error in #${interaction.channel?.name}: ${err.message}`, true);
             await interaction.editReply({ content: `Something went wrong: ${err.message}` });
         }
     }
@@ -381,6 +396,7 @@ bot.on('interactionCreate', async (interaction) => {
 // ── Bot ready — register commands ─────────────────────────────────────────────
 bot.once('ready', async () => {
     console.log(`Bot online: ${bot.user.tag}`);
+    debug(`Bot online: ${bot.user.tag} | ${new Date().toLocaleString('en-GB')}`);
     try {
         const rest     = new REST().setToken(process.env.DISCORD_BOT_TOKEN);
         const commands = [
