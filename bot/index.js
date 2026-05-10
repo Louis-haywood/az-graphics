@@ -115,6 +115,18 @@ bot.on('messageCreate', async (message) => {
             { id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] }
         ];
 
+        if (discordId && discordId !== 'N/A') {
+            overwrites.push({
+                id: discordId,
+                allow: [
+                    PermissionFlagsBits.ViewChannel,
+                    PermissionFlagsBits.SendMessages,
+                    PermissionFlagsBits.ReadMessageHistory,
+                    PermissionFlagsBits.AttachFiles,
+                ]
+            });
+        }
+
         if (process.env.DISCORD_STAFF_ROLE_ID) {
             overwrites.push({
                 id: process.env.DISCORD_STAFF_ROLE_ID,
@@ -137,23 +149,22 @@ bot.on('messageCreate', async (message) => {
         });
 
         const hasProofItems = itemsField?.value?.toLowerCase().includes('edited');
+        const userPing      = discordId && discordId !== 'N/A' ? `<@${discordId}>` : `**${username}**`;
+        const staffPing     = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : '';
 
         const orderEmbed = new EmbedBuilder()
             .setTitle('🛒 New Order — Az Graphics')
             .setColor(0xC9A028)
             .addFields(
-                { name: 'Customer', value: username,               inline: true },
+                { name: 'Customer', value: username,                 inline: true },
                 { name: 'Total',    value: totalField?.value || '—', inline: true },
                 { name: 'Items',    value: itemsField?.value  || '—' }
             )
             .setTimestamp()
             .setFooter({ text: 'Az Graphics' });
 
-        const staffPing = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : 'Staff';
-        const userPing  = discordId && discordId !== 'N/A' ? `<@${discordId}>` : `**${username}**`;
-
         await channel.send({
-            content: `${staffPing} — New order received from ${userPing}!\n\nPlease reach out to them to arrange payment and delivery.${hasProofItems ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items.' : ''}`,
+            content: `Hey ${userPing}! 👋 Thanks for your order — this is your private channel where we'll handle everything.\n\nA member of staff will be with you shortly to arrange payment and send over your files. Feel free to ask any questions here in the meantime!${hasProofItems ? '\n\n⚠️ **Your order includes Edited Graphics.** Please upload your proof of ownership for the base files here before we can fulfil your order.' : ''}\n\n${staffPing}`.trim(),
             embeds:  [orderEmbed]
         });
 
