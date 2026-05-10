@@ -653,27 +653,23 @@ function initPortfolio() {
     document.getElementById('galleryGrid').style.display = 'none';
     document.getElementById('portfolioSoon').style.display = 'none';
 
-    const localFetch  = fetch(`assets/portfolio/images.json?t=${Date.now()}`).then(r => r.json()).catch(() => []);
-    const remoteFetch = TUNNEL_URL ? fetch(`${TUNNEL_URL}/api/portfolio`).then(r => r.json()).catch(() => []) : Promise.resolve([]);
-
-    Promise.all([localFetch, remoteFetch]).then(([local, remote]) => {
-        const localMapped  = local.map(img => ({ ...img, src: `assets/portfolio/${img.file}` }));
-        const remoteMapped = remote.filter(img => !local.find(l => l.file === img.file))
-                                   .map(img => ({ ...img, src: img.url || `${TUNNEL_URL}/portfolio-images/${img.file}` }));
-        portfolioImages = [...localMapped, ...remoteMapped].sort((a, b) => a.file.localeCompare(b.file));
-
-        const grid = document.getElementById('galleryGrid');
-        const soon = document.getElementById('portfolioSoon');
-        if (!portfolioImages.length) { soon.style.display = 'block'; return; }
-        grid.style.display = 'block';
-        portfolioImages.forEach((img, i) => {
-            const item = document.createElement('div');
-            item.className = 'portfolio-item';
-            item.innerHTML = `<img src="${img.src}" alt="${img.caption||'Az Graphics screenshot'}" loading="lazy">`;
-            item.addEventListener('click', () => openLightbox(i));
-            grid.appendChild(item);
-        });
-    });
+    fetch(`${TUNNEL_URL}/api/portfolio`)
+        .then(r => r.json())
+        .then(data => {
+            portfolioImages = data.sort((a, b) => a.file.localeCompare(b.file));
+            const grid = document.getElementById('galleryGrid');
+            const soon = document.getElementById('portfolioSoon');
+            if (!portfolioImages.length) { soon.style.display = 'block'; return; }
+            grid.style.display = 'block';
+            portfolioImages.forEach((img, i) => {
+                const item = document.createElement('div');
+                item.className = 'portfolio-item';
+                item.innerHTML = `<img src="${img.url}" alt="${img.caption||'Az Graphics screenshot'}" loading="lazy">`;
+                item.addEventListener('click', () => openLightbox(i));
+                grid.appendChild(item);
+            });
+        })
+        .catch(() => { document.getElementById('portfolioSoon').style.display = 'block'; });
 
 }
 
@@ -694,7 +690,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function openLightbox(i) {
     lbIndex = i;
-    document.getElementById('lbImg').src = portfolioImages[i].src;
+    document.getElementById('lbImg').src = portfolioImages[i].url || portfolioImages[i].src;
     document.getElementById('lightbox').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
