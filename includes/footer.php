@@ -32,15 +32,16 @@
         <span>&copy; <?= date('Y') ?> Az Graphics. All rights reserved.</span>
         <span>By purchasing you agree to our <a href="/tos.php">Terms of Service</a>.</span>
     </div>
+    <p class="footer-copy"><?= htmlspecialchars($settings['footer_text'] ?? '© 2025 Reece\'s Discos & Photo Booth Hire') ?></p>
     <div class="credits">
-        <a href="https://louishaywood.uk" target="_blank" rel="noopener" class="credits-inner">
-            <img src="https://louishaywood.uk/pfp.jpg" alt="Louis Haywood" class="credits-logo" />
-            <div class="credits-text">
-                <span class="credits-label">Designed &amp; Built by</span>
-                <span class="credits-name">Louis Haywood</span>
-                <span class="credits-url">louishaywood.uk</span>
-            </div>
-        </a>
+      <a href="https://louishaywood.uk" target="_blank" rel="noopener" class="credits-inner">
+        <img src="https://louishaywood.uk/pfp.jpg" alt="Louis Haywood" class="credits-logo" width="32" height="32" />
+        <div class="credits-text">
+          <span class="credits-label">Designed &amp; Built by</span>
+          <span class="credits-name">Louis Haywood</span>
+          <span class="credits-url">louishaywood.uk</span>
+        </div>
+      </a>
     </div>
 </footer>
 
