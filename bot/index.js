@@ -296,6 +296,21 @@ bot.on('interactionCreate', async (interaction) => {
             const transcriptBuffer     = Buffer.from(transcriptText, 'utf8');
             const transcriptAttachment = new AttachmentBuilder(transcriptBuffer, { name: `${channel.name}-transcript.txt` });
 
+            // Collect file attachments from messages (max 9 + transcript = 10)
+            const attachmentFiles = [];
+            for (const msg of messages) {
+                for (const att of msg.attachments.values()) {
+                    try {
+                        const res  = await axios.get(att.url, { responseType: 'arraybuffer' });
+                        attachmentFiles.push(new AttachmentBuilder(Buffer.from(res.data), { name: att.name }));
+                        if (attachmentFiles.length >= 9) break;
+                    } catch {}
+                }
+                if (attachmentFiles.length >= 9) break;
+            }
+
+            const allFiles = [transcriptAttachment, ...attachmentFiles];
+
             // Build receipt embed
             const receiptEmbed = buildReceiptEmbed(username, itemsField?.value, totalField?.value, paid, note);
 
@@ -314,9 +329,9 @@ bot.on('interactionCreate', async (interaction) => {
                 try {
                     const buyer = await bot.users.fetch(buyerId);
                     const dmMsg = paid
-                        ? `Hey **${username}**! 🎉 Your Az Graphics order has been completed and payment confirmed. Here's your receipt and a full transcript of your order channel for your records.`
+                        ? `Hey **${username}**! 🎉 Your Az Graphics order has been completed and payment confirmed. Here's your receipt, transcript and any files from your order channel.`
                         : `Hey **${username}**, your Az Graphics order channel has been closed. Here's a transcript for your records.`;
-                    await buyer.send({ content: dmMsg, embeds: [receiptEmbed], files: [transcriptAttachment] });
+                    await buyer.send({ content: dmMsg, embeds: [receiptEmbed], files: allFiles });
                 } catch {
                     await channel.send({ content: `⚠️ Couldn't DM <@${buyerId}> — their DMs may be closed.` });
                 }
@@ -330,7 +345,7 @@ bot.on('interactionCreate', async (interaction) => {
                     await logChannel.send({
                         content: `**Order closed** by ${interaction.user.username} | Paid: ${paid ? '✅ Yes' : '❌ No'} | Channel: \`#${channel.name}\``,
                         embeds:  [receiptEmbed],
-                        files:   [transcriptAttachment]
+                        files:   allFiles
                     });
                 }
             }
