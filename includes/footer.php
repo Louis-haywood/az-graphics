@@ -13,7 +13,7 @@
             <ul>
                 <li><a href="/index.php">Home</a></li>
                 <li><a href="/shop.php">Shop</a></li>
-                <li><a href="/portfolio.php">niga</a></li>
+                <li><a href="/niga.php">niga</a></li>
                 <li><a href="/tos.php">Terms of Service</a></li>
                 <li><a href="/cart.php">Cart</a></li>
             </ul>
