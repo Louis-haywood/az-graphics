@@ -698,19 +698,17 @@ function initHeroSlideshow() {
     slideshowStarted = true;
     const slides = [document.getElementById('heroSlide0'), document.getElementById('heroSlide1')];
     let active = 0, idx = 0, images = [];
-    const slideApiUrl = TUNNEL_URL ? `${TUNNEL_URL}/api/portfolio` : `assets/portfolio/images.json?t=${Date.now()}`;
-    fetch(slideApiUrl)
+    fetch(`assets/portfolio/images.json?t=${Date.now()}`)
         .then(r => r.json())
         .then(data => {
             images = data.sort(() => Math.random() - 0.5);
-            const srcFor = img => TUNNEL_URL ? (img.url || `${TUNNEL_URL}/portfolio-images/${img.file}`) : `assets/portfolio/${img.file}`;
-            images.forEach(img => { const p = new Image(); p.src = srcFor(img); });
-            slides[0].style.backgroundImage = `url('${srcFor(images[0])}')`;
+            images.forEach(img => { const p = new Image(); p.src = `assets/portfolio/${img.file}`; });
+            slides[0].style.backgroundImage = `url('assets/portfolio/${images[0].file}')`;
             slides[0].classList.add('active');
             idx = 1;
             setInterval(() => {
                 const next = active ^ 1;
-                slides[next].style.backgroundImage = `url('${srcFor(images[idx % images.length])}')`;
+                slides[next].style.backgroundImage = `url('assets/portfolio/${images[idx % images.length].file}')`;
                 slides[next].classList.add('active');
                 slides[active].classList.remove('active');
                 active = next; idx++;
