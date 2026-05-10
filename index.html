@@ -665,7 +665,8 @@ function initPortfolio() {
             portfolioImages.forEach((img, i) => {
                 const item = document.createElement('div');
                 item.className = 'portfolio-item';
-                item.innerHTML = `<img src="${img.src}" alt="${img.caption||'Az Graphics screenshot'}" loading="lazy" decoding="async">`;
+                const eager = i < 6;
+                item.innerHTML = `<img src="${img.src}" alt="${img.caption||'Az Graphics screenshot'}" loading="${eager ? 'eager' : 'lazy'}" decoding="async"${eager ? ' fetchpriority="high"' : ''}>`;
                 item.addEventListener('click', () => openLightbox(i));
                 grid.appendChild(item);
             });
