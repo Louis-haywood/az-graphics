@@ -653,9 +653,15 @@ function initPortfolio() {
     if (portfolioLoaded) return;
     portfolioLoaded = true;
 
-    fetch(`assets/portfolio/images.json?t=${Date.now()}`).then(r => r.json()).catch(() => []).then(data => {
-        portfolioImages = data.map(img => ({ ...img, src: `assets/portfolio/${img.file}` }))
-                             .sort((a, b) => a.file.localeCompare(b.file));
+    const localFetch  = fetch(`assets/portfolio/images.json?t=${Date.now()}`).then(r => r.json()).catch(() => []);
+    const remoteFetch = TUNNEL_URL ? fetch(`${TUNNEL_URL}/api/portfolio`).then(r => r.json()).catch(() => []) : Promise.resolve([]);
+
+    Promise.all([localFetch, remoteFetch]).then(([local, remote]) => {
+        const localMapped  = local.map(img => ({ ...img, src: `assets/portfolio/${img.file}` }));
+        const remoteMapped = remote.filter(img => !local.find(l => l.file === img.file))
+                                   .map(img => ({ ...img, src: img.url || `${TUNNEL_URL}/portfolio-images/${img.file}` }));
+        portfolioImages = [...localMapped, ...remoteMapped].sort((a, b) => a.file.localeCompare(b.file));
+
         const grid = document.getElementById('galleryGrid');
         const soon = document.getElementById('portfolioSoon');
         if (!portfolioImages.length) { soon.style.display = 'block'; return; }
