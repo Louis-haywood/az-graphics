@@ -1,7 +1,8 @@
 require('dotenv').config();
 const {
     Client, GatewayIntentBits, PermissionFlagsBits, ChannelType,
-    EmbedBuilder, REST, Routes, SlashCommandBuilder, AttachmentBuilder
+    EmbedBuilder, REST, Routes, SlashCommandBuilder, AttachmentBuilder,
+    ActionRowBuilder, ButtonBuilder, ButtonStyle
 } = require('discord.js');
 const express    = require('express');
 const axios      = require('axios');
@@ -134,9 +135,17 @@ bot.on('messageCreate', async (message) => {
                 { name: 'Items', value: itemsField?.value || '—' }
             ).setTimestamp().setFooter({ text: 'Az Graphics' });
 
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setCustomId(`paid_${channel.id}`)
+                .setLabel('✅ I\'ve Paid')
+                .setStyle(ButtonStyle.Success)
+        );
+
         await channel.send({
-            content: `Hey ${userPing}! 👋 Thanks for your order — this is your private channel where we'll handle everything.\n\n**To complete your order, please pay using the link below:**\n> 💳 **[Click here to pay £${totalNum} via PayPal](${paypalLink})**\n\nOnce payment is sent, let us know here and we'll get your files over to you ASAP!${hasProof ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items — please upload it here before we can fulfil your order.' : ''}\n\n${staffPing}`.trim(),
-            embeds: [orderEmbed]
+            content: `Hey ${userPing}! 👋 Thanks for your order — this is your private channel where we'll handle everything.\n\n**To complete your order, please pay using the link below:**\n> 💳 **[Click here to pay £${totalNum} via PayPal](${paypalLink})**\n\nOnce you've paid, click the button below and staff will be notified!${hasProof ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items — please upload it here before we can fulfil your order.' : ''}\n\n${staffPing}`.trim(),
+            embeds: [orderEmbed],
+            components: [row]
         });
 
         console.log(`Order channel created: ${channel.name} for ${username}`);
@@ -202,6 +211,19 @@ function buildReceiptEmbed(username, itemsText, total, paid, note) {
 
 // ── Interactions ──────────────────────────────────────────────────────────────
 bot.on('interactionCreate', async (interaction) => {
+
+    // ── "I've Paid" button ────────────────────────────────────────────────────
+    if (interaction.isButton() && interaction.customId.startsWith('paid_')) {
+        const staffPing = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : 'Staff';
+
+        await interaction.update({ components: [] }); // remove the button
+
+        await interaction.channel.send({
+            content: `💰 **Payment claimed by ${interaction.user}!**\n\n${staffPing} — please verify the payment and deliver the files. Once confirmed, use \`/closeorder paid:True\` to close this ticket.`
+        });
+        return;
+    }
+
     if (!interaction.isChatInputCommand()) return;
 
     // /imageupload
