@@ -113,9 +113,11 @@ bot.on('messageCreate', async (message) => {
             topic: `Order from ${username} | ${totalField?.value || ''} | uid:${discordId || 'N/A'}`
         });
 
-        const userPing  = discordId && discordId !== 'N/A' ? `<@${discordId}>` : `**${username}**`;
-        const staffPing = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : '';
-        const hasProof  = itemsField?.value?.toLowerCase().includes('edited');
+        const userPing   = discordId && discordId !== 'N/A' ? `<@${discordId}>` : `**${username}**`;
+        const staffPing  = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : '';
+        const hasProof   = itemsField?.value?.toLowerCase().includes('edited');
+        const totalNum   = totalField?.value?.replace(/[^0-9.]/g, '') || '';
+        const paypalLink = `https://www.paypal.me/AzGraphics11${totalNum ? `/${totalNum}` : ''}`;
 
         const orderEmbed = new EmbedBuilder()
             .setTitle('🛒 New Order — Az Graphics').setColor(0xC9A028)
@@ -126,7 +128,7 @@ bot.on('messageCreate', async (message) => {
             ).setTimestamp().setFooter({ text: 'Az Graphics' });
 
         await channel.send({
-            content: `Hey ${userPing}! 👋 Thanks for your order — this is your private channel where we'll handle everything.\n\nA member of staff will be with you shortly to arrange payment and send over your files.${hasProof ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items — please upload it here.' : ''}\n\n${staffPing}`.trim(),
+            content: `Hey ${userPing}! 👋 Thanks for your order — this is your private channel where we'll handle everything.\n\n**To complete your order, please pay using the link below:**\n> 💳 **[Click here to pay £${totalNum} via PayPal](${paypalLink})**\n\nOnce payment is sent, let us know here and we'll get your files over to you ASAP!${hasProof ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items — please upload it here before we can fulfil your order.' : ''}\n\n${staffPing}`.trim(),
             embeds: [orderEmbed]
         });
 
