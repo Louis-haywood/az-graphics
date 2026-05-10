@@ -653,10 +653,11 @@ function initPortfolio() {
     document.getElementById('galleryGrid').style.display = 'none';
     document.getElementById('portfolioSoon').style.display = 'none';
 
-    fetch(`${TUNNEL_URL}/api/portfolio`)
+    fetch(`assets/portfolio/images.json?t=${Date.now()}`)
         .then(r => r.json())
         .then(data => {
-            portfolioImages = data.sort((a, b) => a.file.localeCompare(b.file));
+            portfolioImages = data.map(img => ({ ...img, src: `assets/portfolio/${img.file}` }))
+                                  .sort((a, b) => a.file.localeCompare(b.file));
             const grid = document.getElementById('galleryGrid');
             const soon = document.getElementById('portfolioSoon');
             if (!portfolioImages.length) { soon.style.display = 'block'; return; }
@@ -664,7 +665,7 @@ function initPortfolio() {
             portfolioImages.forEach((img, i) => {
                 const item = document.createElement('div');
                 item.className = 'portfolio-item';
-                item.innerHTML = `<img src="${img.url}" alt="${img.caption||'Az Graphics screenshot'}" loading="lazy">`;
+                item.innerHTML = `<img src="${img.src}" alt="${img.caption||'Az Graphics screenshot'}" loading="lazy">`;
                 item.addEventListener('click', () => openLightbox(i));
                 grid.appendChild(item);
             });
@@ -690,7 +691,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function openLightbox(i) {
     lbIndex = i;
-    document.getElementById('lbImg').src = portfolioImages[i].url || portfolioImages[i].src;
+    document.getElementById('lbImg').src = portfolioImages[i].src;
     document.getElementById('lightbox').style.display = 'flex';
     document.body.style.overflow = 'hidden';
 }
