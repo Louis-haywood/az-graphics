@@ -138,12 +138,12 @@ bot.on('messageCreate', async (message) => {
         const row = new ActionRowBuilder().addComponents(
             new ButtonBuilder()
                 .setCustomId(`paid_${channel.id}`)
-                .setLabel('✅ I\'ve Paid')
+                .setLabel('I\'ve Paid')
                 .setStyle(ButtonStyle.Success)
         );
 
         await channel.send({
-            content: `Hey ${userPing}! 👋 Thanks for your order — this is your private channel where we'll handle everything.\n\n**To complete your order, please pay using the link below:**\n> 💳 **[Click here to pay £${totalNum} via PayPal](${paypalLink})**\n\nOnce you've paid, click the button below and staff will be notified!${hasProof ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items — please upload it here before we can fulfil your order.' : ''}\n\n${staffPing}`.trim(),
+            content: `Hey ${userPing}, Thanks for your order. This is your private channel where we'll handle everything.\n\n**To complete your order, please pay using the link below:**\n> 💳 **[Click here to pay £${totalNum} via PayPal](${paypalLink})**, for other payment methods contact staff.\n\nOnce you've paid, click the button below and staff will be notified!${hasProof ? '\n\n⚠️ **Proof of ownership required** for Edited Graphics items — please upload it here before we can fulfil your order.' : ''}\n\n${staffPing}`.trim(),
             embeds: [orderEmbed],
             components: [row]
         });
@@ -189,7 +189,7 @@ function buildTranscript(channel, messages) {
 function buildReceiptEmbed(username, itemsText, total, paid, note) {
     const orderId = `AZG-${new Date().getFullYear()}-${Date.now().toString(36).toUpperCase().slice(-6)}`;
     const embed = new EmbedBuilder()
-        .setTitle(paid ? '🧾 Payment Receipt — Az Graphics' : '📋 Order Closed — Az Graphics')
+        .setTitle(paid ? 'Payment Receipt — Az Graphics' : 'Order Closed — Az Graphics')
         .setColor(paid ? 0x00C851 : 0xFF4444)
         .setDescription(paid
             ? `Thank you for your purchase, **${username}**! Your files will be sent to you shortly. Keep this receipt for your records.`
@@ -200,7 +200,7 @@ function buildReceiptEmbed(username, itemsText, total, paid, note) {
             { name: '​',          value: '​',            inline: true },
             { name: 'Customer',        value: username,            inline: true },
             { name: 'Total',           value: total || '—',        inline: true },
-            { name: 'Payment',         value: paid ? '✅ Confirmed' : '❌ Not Paid', inline: true },
+            { name: 'Payment',         value: paid ? 'Confirmed' : 'Not Paid', inline: true },
             { name: 'Items',           value: itemsText || '—' }
         )
         .setTimestamp()
@@ -224,7 +224,7 @@ bot.on('interactionCreate', async (interaction) => {
         const staffPing = process.env.DISCORD_STAFF_ROLE_ID ? `<@&${process.env.DISCORD_STAFF_ROLE_ID}>` : 'Staff';
         await interaction.update({ components: [] });
         await interaction.channel.send({
-            content: `💰 **Payment claimed by ${interaction.user}!**\n\n${staffPing} — please verify the payment and deliver the files. Once confirmed, use \`/closeorder paid:True\` to close this ticket.`
+            content: `**Payment claimed by ${interaction.user}!**\n\n${staffPing} — please verify the payment and deliver the files. Once confirmed, use \`/closeorder paid:True\` to close this ticket.`
         });
         return;
     }
@@ -235,12 +235,12 @@ bot.on('interactionCreate', async (interaction) => {
     if (interaction.commandName === 'imageupload') {
         const allowedRole = process.env.PORTFOLIO_ROLE_ID;
         if (allowedRole && !interaction.member.roles.cache.has(allowedRole))
-            return interaction.reply({ content: '❌ You don\'t have permission to upload portfolio images.', ephemeral: true });
+            return interaction.reply({ content: 'You don\'t have permission to upload portfolio images.', ephemeral: true });
 
         const attachment = interaction.options.getAttachment('image');
         const caption    = interaction.options.getString('caption') || '';
         if (!attachment.contentType?.startsWith('image/'))
-            return interaction.reply({ content: '❌ Please attach a valid image file.', ephemeral: true });
+            return interaction.reply({ content: 'Please attach a valid image file.', ephemeral: true });
 
         await interaction.deferReply({ ephemeral: true });
         try {
@@ -253,25 +253,25 @@ bot.on('interactionCreate', async (interaction) => {
             images.push({ file: filename, caption });
             fs.writeFileSync(PORTFOLIO_JSON, JSON.stringify(images, null, 2));
 
-            await interaction.editReply({ content: `✅ **${attachment.name}** uploaded to the portfolio!${caption ? ` Caption: "${caption}"` : ''} It will go live within 10 seconds.` });
+            await interaction.editReply({ content: `**${attachment.name}** uploaded to the portfolio!${caption ? ` Caption: "${caption}"` : ''} It will go live within 10 seconds.` });
             console.log(`Portfolio image saved: ${filename}`);
         } catch (err) {
             console.error('Image upload error:', err);
-            await interaction.editReply({ content: '❌ Something went wrong uploading the image.' });
+            await interaction.editReply({ content: 'Something went wrong uploading the image.' });
         }
     }
 
     // /closeorder
     if (interaction.commandName === 'closeorder') {
         if (process.env.DISCORD_STAFF_ROLE_ID && !interaction.member.roles.cache.has(process.env.DISCORD_STAFF_ROLE_ID))
-            return interaction.reply({ content: '❌ Only staff can close orders.', ephemeral: true });
+            return interaction.reply({ content: 'Only staff can close orders.', ephemeral: true });
 
         const paid    = interaction.options.getBoolean('paid');
         const note    = interaction.options.getString('note') || '';
         const channel = interaction.channel;
 
         if (!channel.name.startsWith('order-'))
-            return interaction.reply({ content: '❌ This command can only be used in an order channel.', ephemeral: true });
+            return interaction.reply({ content: 'This command can only be used in an order channel.', ephemeral: true });
 
         await interaction.deferReply({ ephemeral: true });
 
@@ -333,7 +333,7 @@ bot.on('interactionCreate', async (interaction) => {
                         : `Hey **${username}**, your Az Graphics order channel has been closed. Here's a transcript for your records.`;
                     await buyer.send({ content: dmMsg, embeds: [receiptEmbed], files: allFiles });
                 } catch {
-                    await channel.send({ content: `⚠️ Couldn't DM <@${buyerId}> — their DMs may be closed.` });
+                    await channel.send({ content: `Couldn't DM <@${buyerId}> — their DMs may be closed.` });
                 }
             }
 
@@ -343,7 +343,7 @@ bot.on('interactionCreate', async (interaction) => {
                 const logChannel = interaction.guild.channels.cache.get(logChannelId);
                 if (logChannel) {
                     await logChannel.send({
-                        content: `**Order closed** by ${interaction.user.username} | Paid: ${paid ? '✅ Yes' : '❌ No'} | Channel: \`#${channel.name}\``,
+                        content: `**Order closed** by ${interaction.user.username} | Paid: ${paid ? 'Yes' : 'No'} | Channel: \`#${channel.name}\``,
                         embeds:  [receiptEmbed],
                         files:   allFiles
                     });
@@ -352,7 +352,7 @@ bot.on('interactionCreate', async (interaction) => {
 
             // Post closing message in channel
             await channel.send({
-                content: `🔒 **This order channel has been closed.**\n> **Paid:** ${paid ? '✅ Yes' : '❌ No'}${note ? `\n> **Note:** ${note}` : ''}\n\nA transcript has been sent${buyerId ? ' to the buyer\'s DMs and' : ' to'} the staff logs.`,
+                content: `**This order channel has been closed.**\n> **Paid:** ${paid ? 'Yes' : 'No'}${note ? `\n> **Note:** ${note}` : ''}\n\nA transcript has been sent${buyerId ? ' to the buyer\'s DMs and' : ' to'} the staff logs.`,
                 embeds: [receiptEmbed]
             });
 
@@ -369,11 +369,11 @@ bot.on('interactionCreate', async (interaction) => {
             }
 
             await channel.edit({ name: `closed-${cleanName}`, permissionOverwrites: newOverwrites });
-            await interaction.editReply({ content: `✅ Order closed. Transcript sent.` });
+            await interaction.editReply({ content: `Order closed. Transcript sent.` });
 
         } catch (err) {
             console.error('Close order error:', err);
-            await interaction.editReply({ content: `❌ Something went wrong: ${err.message}` });
+            await interaction.editReply({ content: `Something went wrong: ${err.message}` });
         }
     }
 });
