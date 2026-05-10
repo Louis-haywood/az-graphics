@@ -636,6 +636,15 @@ footer {
 }
 .footer-bottom a { color: var(--gold); }
 
+.credits { text-align:center; padding:.75rem 2rem; background:var(--bg-2); border-top:1px solid var(--border); }
+.credits-inner { display:inline-flex; align-items:center; gap:.6rem; opacity:.5; transition:var(--tr); text-decoration:none; }
+.credits-inner:hover { opacity:1; }
+.credits-logo { width:24px; height:24px; border-radius:50%; object-fit:cover; }
+.credits-text { display:flex; align-items:center; gap:.35rem; font-size:.72rem; color:var(--text-muted); }
+.credits-label { color:var(--text-muted); }
+.credits-name { color:var(--text); font-weight:600; }
+.credits-url { color:var(--gold); }
+
 /* ── RESPONSIVE ── */
 @media (max-width: 900px) {
     .cart-layout { grid-template-columns: 1fr; }
