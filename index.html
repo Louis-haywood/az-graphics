@@ -645,13 +645,13 @@ async function placeOrder() {
 }
 
 // ── PORTFOLIO ─────────────────────────────────────────────────────────────────
-let portfolioLoaded = false;
 let portfolioImages = [];
 let lbIndex = 0;
 
 function initPortfolio() {
-    if (portfolioLoaded) return;
-    portfolioLoaded = true;
+    document.getElementById('galleryGrid').innerHTML = '';
+    document.getElementById('galleryGrid').style.display = 'none';
+    document.getElementById('portfolioSoon').style.display = 'none';
 
     const localFetch  = fetch(`assets/portfolio/images.json?t=${Date.now()}`).then(r => r.json()).catch(() => []);
     const remoteFetch = TUNNEL_URL ? fetch(`${TUNNEL_URL}/api/portfolio`).then(r => r.json()).catch(() => []) : Promise.resolve([]);
@@ -675,6 +675,10 @@ function initPortfolio() {
         });
     });
 
+}
+
+// Lightbox listeners — attached once on load
+document.addEventListener('DOMContentLoaded', () => {
     const lb = document.getElementById('lightbox');
     document.getElementById('lbClose').addEventListener('click', closeLightbox);
     document.getElementById('lbPrev').addEventListener('click', () => openLightbox((lbIndex - 1 + portfolioImages.length) % portfolioImages.length));
@@ -686,7 +690,7 @@ function initPortfolio() {
         if (e.key === 'ArrowRight') openLightbox((lbIndex + 1) % portfolioImages.length);
         if (e.key === 'Escape') closeLightbox();
     });
-}
+});
 
 function openLightbox(i) {
     lbIndex = i;
