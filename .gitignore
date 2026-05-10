@@ -1,0 +1,10 @@
+# Environment variables - NEVER commit these
+bot/.env
+.env
+
+# Node modules
+bot/node_modules/
+node_modules/
+
+# PM2 logs
+*.log
