@@ -98,11 +98,18 @@ bot.on('messageCreate', async (message) => {
         const guild      = message.guild;
 
         const overwrites = [{ id: guild.roles.everyone, deny: [PermissionFlagsBits.ViewChannel] }];
+
         if (discordId && discordId !== 'N/A') {
-            overwrites.push({ id: discordId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.AttachFiles] });
+            try {
+                const member = await guild.members.fetch(discordId).catch(() => null);
+                if (member) overwrites.push({ id: discordId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.AttachFiles] });
+            } catch {}
         }
-        if (process.env.DISCORD_STAFF_ROLE_ID) {
-            overwrites.push({ id: process.env.DISCORD_STAFF_ROLE_ID, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.AttachFiles] });
+
+        const staffRoleId = process.env.DISCORD_STAFF_ROLE_ID;
+        if (staffRoleId) {
+            const staffRole = guild.roles.cache.get(staffRoleId);
+            if (staffRole) overwrites.push({ id: staffRoleId, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages, PermissionFlagsBits.ReadMessageHistory, PermissionFlagsBits.ManageChannels, PermissionFlagsBits.AttachFiles] });
         }
 
         const channel = await guild.channels.create({
