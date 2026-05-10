@@ -53,8 +53,13 @@ setInterval(() => {
 
 // ── Portfolio API ─────────────────────────────────────────────────────────────
 app.get('/api/portfolio', (req, res) => {
-    try { res.json(JSON.parse(fs.readFileSync(PORTFOLIO_JSON, 'utf8'))); }
-    catch { res.json([]); }
+    try {
+        const files = fs.readdirSync(PORTFOLIO_DIR)
+            .filter(f => /\.(png|jpg|jpeg|gif|webp)$/i.test(f))
+            .sort()
+            .map(f => ({ file: f, caption: '', url: `${process.env.TUNNEL_URL}/portfolio-images/${f}` }));
+        res.json(files);
+    } catch { res.json([]); }
 });
 app.use('/portfolio-images', express.static(PORTFOLIO_DIR));
 
