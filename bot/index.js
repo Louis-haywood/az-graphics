@@ -294,6 +294,16 @@ bot.on('interactionCreate', async (interaction) => {
             // Build receipt embed
             const receiptEmbed = buildReceiptEmbed(username, itemsField?.value, totalField?.value, paid, note);
 
+            // Assign paid role to buyer
+            if (paid && buyerId) {
+                try {
+                    const member = await interaction.guild.members.fetch(buyerId).catch(() => null);
+                    if (member) await member.roles.add('958729075525054504');
+                } catch (err) {
+                    console.error('Failed to assign paid role:', err);
+                }
+            }
+
             // DM the buyer
             if (buyerId) {
                 try {
